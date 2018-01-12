@@ -61,7 +61,8 @@ class searchResult{
      * Used by array_unique() to remove dublicate object
      */
     public function __toString() {
-        return $this->title.$this->link;
+       // return $this->title.$this->link;
+        return $this->title.$this->content;
     }
 
 

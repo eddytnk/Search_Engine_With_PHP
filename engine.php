@@ -9,18 +9,62 @@
 class Engine{
     
     private $search_result = array();
+    private $visited_pivots = array();
     
+    private $num_of_sub_pivots = 1; //Default for all pivots
     private $cnt = 0;
+    
     /**
      * Get all link in the pivoted page and call the search method for each link
+     * This method goes nth levels deep into the pivot 
      * @param type $search_key
-     * @param type $pivot
+     * @param type $pivot_link
      */
-    public function searchLink($search_key,$pivot){
+    public function searchLink_With_Recursion($search_key,$pivot_link){
         //get all link in the pivot page
         // call search() function for each link
+        // recurvely call this function ontil all links in the pivot website are pivoted
         
-        $data=file_get_contents($pivot);
+        $pivot = rtrim($pivot_link,'/'); //strip / at the ends
+        
+        if (in_array($pivot, $this->visited_pivots)){
+            return;
+        }
+        if ($this->num_of_sub_pivots==0){
+            array_push($this->visited_pivots, $pivot);
+            return;
+        }
+        $this->num_of_sub_pivots--;
+        
+        echo "<small>Pivoting URL: ".$pivot."</small><br/>";
+        flush();
+        ob_flush();
+        
+        
+        array_push($this->visited_pivots, $pivot);
+        
+        //$data=file_get_contents($pivot);
+        
+        $ch = curl_init();
+        $options = array(
+            CURLOPT_URL            => $pivot,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HEADER         => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_ENCODING       => "",
+            CURLOPT_AUTOREFERER    => true,
+            CURLOPT_CONNECTTIMEOUT => 60,
+            CURLOPT_TIMEOUT        => 60,
+            CURLOPT_MAXREDIRS      => 10,
+            CURLOPT_SSL_VERIFYPEER      => False,
+        );
+        curl_setopt_array( $ch, $options );
+        $data = curl_exec($ch); 
+        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        if($status !=200){
+            return NULL;
+        }
         
         $start = stripos($data, "<body");
         $end = stripos($data, "</body");
@@ -50,9 +94,13 @@ class Engine{
         foreach($urlList as $url){
             $adr = rtrim($url,'"\''); //strip " and ' at the ends
             $adr = rtrim($url,'/'); //strip " and ' at the ends
+         
             
             //get pivot domain name from pivot URL
             $parse = parse_url($pivot);
+            if(!isset($parse['host'])){
+                continue;
+            }
             $pos = stripos($adr,$parse['host']); // check if pivot domain is in URL;
             if ($pos !== false) {
                 $related_link[$i++] =  $adr;
@@ -60,15 +108,104 @@ class Engine{
                 $related_link[$i++] =  $pivot.$adr;
             }
         }
-       // print_r($related_link);
-        //die();
-        
+      
         foreach($related_link as $url){
            $this->search($search_key, $url);
             //echo $search_key." ".$url."<br/>";
+           
+           //Recursively call searchLink() ontil search_level_deep == 0;
+            $this->searchLink_With_Recursion($search_key, $url);
         }
-      
+       
     }
+    
+    /**
+     * Get all link in the pivoted page and call the search method for each link
+     * This method does on level deep from the pivot (Faster and efficient)
+     * @param type $search_key
+     * @param type $pivot
+     */
+    public function searchLink($search_key,$pivot){
+        //get all link in the pivot page
+        // call search() function for each link
+        
+      
+        $ch = curl_init();
+        $options = array(
+            CURLOPT_URL            => $pivot,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HEADER         => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_ENCODING       => "",
+            CURLOPT_AUTOREFERER    => true,
+            CURLOPT_CONNECTTIMEOUT => 60,
+            CURLOPT_TIMEOUT        => 60,
+            CURLOPT_MAXREDIRS      => 10,
+            CURLOPT_SSL_VERIFYPEER      => False,
+        );
+        curl_setopt_array( $ch, $options );
+        $data = curl_exec($ch); 
+        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        if($status !=200){
+            return NULL;
+        }
+        
+        $start = stripos($data, "<body");
+        $end = stripos($data, "</body");
+        //get html body
+        $body = substr($data,$start,$end-$start);
+        //remove all tag except <a> 
+        $result_body = strip_tags($body,"<a>");
+   
+        $matches = array();
+        //regular expression that matches most url 
+    
+        //$pattern = '#((https?)*://(\S*?\.\S*?))([\s)\[\]{},;"\':<]|\.\s|$)#i';
+        $pattern = '#[-a-zA-Z0-9@:%_\+.~\#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~\#?&//=]*)?#si';
+
+        //perform global regular expression match, ie search the entire web page for a particular thing, and store it in the previously initialised array.
+        preg_match_all($pattern, $result_body, $matches);
+
+        //add pivot to searched url list
+        array_push($matches, $pivot);
+        
+        //remove duplicate addresses, but maintain incremental key count.
+        $urlList = array_values(array_unique($matches[0]));
+        
+         $related_link = array();
+         $i = 0;
+         $total = count($urlList);
+         // Processing comments
+//        echo "<br/><small><b>Processing links : ".$total." link for Pivot: ".$pivot."</small></b><br/>";
+//        flush();
+//        ob_flush();
+        
+        //get pivot domain name from pivot URL
+            $parse = parse_url($pivot);
+ 
+        //$tot = count($urlList);
+        $tot = (count($urlList)>110)? 110:count($urlList); // Not good :( added due to php max_execution at 120 sec.         
+        for($k = 0; $k<$tot; $k++){
+            
+//            echo "[".$k."]";  // Processing comments
+            
+            $url = $urlList[$k];
+            
+            $adr = rtrim($url,'"\''); //strip " and ' at the ends
+           
+            $pos = stripos($adr,$parse['host']); // check if pivot domain is in URL;
+            if ($pos !== false) {
+                $related_link[$i++] =  $adr;
+            }else if(substr($adr, 0,1)=="/" && substr($adr, 1,1)!="/"){
+                $related_link[$i++] =  $pivot.$adr;
+            }
+            $this->search($search_key, $url);
+        }
+       
+    }
+    
+    
     /**
      * search each link and add to the search result if it content contains search key
      * 
@@ -77,8 +214,7 @@ class Engine{
      * @return type
      */
     public function search($search_key,$link){
-      
-       
+       $start_time = time();
         $ch = curl_init();
         $options = array(
             CURLOPT_URL            => $link,
@@ -97,9 +233,16 @@ class Engine{
         $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
         if($status !=200){
+            // Processing comments
+//            echo "<small style='color:red'>Searching...".$link." [".( time()-$start_time)."]secs</small><br/>";
+//            flush();
+//            ob_flush();
             return NULL;
         }
-
+        // Processing comments
+//        echo "<small style='color:blue'>Searching...".$link." [".( time()-$start_time)."]secs</small><br/>";
+//        flush();
+//        ob_flush();
         $start = stripos($data, "<body");
         $end = stripos($data, "</body");
         //get html body
@@ -142,10 +285,12 @@ class Engine{
             $this->cnt++;
             $this->addSearch($search_result);
         }
+        // Processing comments
+//        echo "<small style='color:green'>Success</small><br/>";
+//        flush();
+//        ob_flush();
         
-        
-        return $this->getSearch_result();
-        
+     
     }
     
     public function getSearch_result() {
@@ -174,7 +319,11 @@ class Engine{
         }
     }
 
-    
+    function setNum_of_sub_pivots($num_of_sub_pivots) {
+        $this->num_of_sub_pivots = $num_of_sub_pivots;
+    }
+
+
     
 }
 ?>

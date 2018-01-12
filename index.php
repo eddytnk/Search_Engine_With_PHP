@@ -5,10 +5,9 @@ include_once './search_result.php';
 include_once './page_content_search.php';
 
     $list_of_search_pivots = [
-        "https://tankoedward.wordpress.com/",
-         "http://www.cnn.com/",
-         "http://www.foxnews.com/",
-        "http://www.aljazeera.com/",
+       // "https://tankoedward.wordpress.com/", // Me
+        "https://www.killerphp.com/articles/", // Php
+       // "http://adambien.blog/roller/abien/",  // Java
         ];
 
 
@@ -19,17 +18,19 @@ include_once './page_content_search.php';
          
          // Search using the $search_key
          foreach ($list_of_search_pivots as $pivots){
+             //for each pivot  $set_Num_of_sub_pivots = 200;
+            $search_engine->setNum_of_sub_pivots(1);
             $search_engine->searchLink($search_key, $pivots);
          }
          // Search using each word on the $search_key
-         $words = explode($search_key, " ");
-         if(count($words)>1){
-            foreach($words as $key){
-               foreach ($list_of_search_pivots as $pivots){
-                 $search_engine->searchLink($key, $pivots);
-               }
-            }
-         }
+//         $words = explode($search_key, " ");
+//         if(count($words)>1){
+//            foreach($words as $key){
+//               foreach ($list_of_search_pivots as $pivots){
+//                 $search_engine->searchLink($key, $pivots);
+//               }
+//            }
+//         }
          
          $search_results = $search_engine->getSearch_result();
     }else{
