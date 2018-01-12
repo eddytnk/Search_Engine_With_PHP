@@ -58,7 +58,8 @@ class searchResult{
 
         
     /*
-     * Used by array_unique() to remove dublicate object
+     * Used by array_unique() to remove duplicate object
+     * Two SearchResults are equal if there _toString() are thesame; i.e title and content thesame
      */
     public function __toString() {
        // return $this->title.$this->link;

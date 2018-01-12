@@ -8,7 +8,7 @@
 
 class Engine{
     
-    private $search_result = array();
+    private $search_result = array(); // An array of SearchResult Objects
     private $visited_pivots = array();
     
     private $num_of_sub_pivots = 1; //Default for all pivots
@@ -173,8 +173,7 @@ class Engine{
         //remove duplicate addresses, but maintain incremental key count.
         $urlList = array_values(array_unique($matches[0]));
         
-         $related_link = array();
-         $i = 0;
+      
          $total = count($urlList);
          // Processing comments
 //        echo "<br/><small><b>Processing links : ".$total." link for Pivot: ".$pivot."</small></b><br/>";
@@ -196,13 +195,9 @@ class Engine{
            
             $pos = stripos($adr,$parse['host']); // check if pivot domain is in URL;
             if ($pos !== false) {
-                $related_link[$i++] =  $adr;
-            }else if(substr($adr, 0,1)=="/" && substr($adr, 1,1)!="/"){
-                $related_link[$i++] =  $pivot.$adr;
+               $this->search($search_key, $url);
             }
-            $this->search($search_key, $url);
         }
-       
     }
     
     
@@ -214,7 +209,9 @@ class Engine{
      * @return type
      */
     public function search($search_key,$link){
-       $start_time = time();
+        // Processing comments
+//        $start_time = time();
+        
         $ch = curl_init();
         $options = array(
             CURLOPT_URL            => $link,
@@ -294,7 +291,7 @@ class Engine{
     }
     
     public function getSearch_result() {
-        //remove dublicate search result objects
+        //remove duplicate search result objects
         //just in case two links leads to thesame content
         // sort search result by their $position value desc order
         $res =  array_unique($this->search_result);
