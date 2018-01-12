@@ -5,8 +5,9 @@ include_once './search_result.php';
 include_once './page_content_search.php';
 
     $list_of_search_pivots = [
-        "http://www.cnn.com/",
-        "http://www.foxnews.com/",
+        "https://tankoedward.wordpress.com/",
+         "http://www.cnn.com/",
+         "http://www.foxnews.com/",
         "http://www.aljazeera.com/",
         ];
 

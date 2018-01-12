@@ -1,5 +1,5 @@
 <?php
-include_once './strip_tags.php';
+
 /**
  * This class is the engine of all searches performed
  *
@@ -49,6 +49,7 @@ class Engine{
          $i = 0;
         foreach($urlList as $url){
             $adr = rtrim($url,'"\''); //strip " and ' at the ends
+            $adr = rtrim($url,'/'); //strip " and ' at the ends
             
             //get pivot domain name from pivot URL
             $parse = parse_url($pivot);
@@ -59,11 +60,14 @@ class Engine{
                 $related_link[$i++] =  $pivot.$adr;
             }
         }
-       
+       // print_r($related_link);
+        //die();
+        
         foreach($related_link as $url){
-            $this->search($search_key, $url);
+           $this->search($search_key, $url);
+            //echo $search_key." ".$url."<br/>";
         }
-       
+      
     }
     /**
      * search each link and add to the search result if it content contains search key
@@ -74,25 +78,34 @@ class Engine{
      */
     public function search($search_key,$link){
       
-        //$data=file_get_contents($link);
-        
-        $ch = curl_init($link);
        
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
-        $data = curl_exec($ch);
+        $ch = curl_init();
+        $options = array(
+            CURLOPT_URL            => $link,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HEADER         => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_ENCODING       => "",
+            CURLOPT_AUTOREFERER    => true,
+            CURLOPT_CONNECTTIMEOUT => 60,
+            CURLOPT_TIMEOUT        => 60,
+            CURLOPT_MAXREDIRS      => 10,
+            CURLOPT_SSL_VERIFYPEER      => False,
+        );
+        curl_setopt_array( $ch, $options );
+        $data = curl_exec($ch); 
         $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+
         if($status !=200){
             return NULL;
         }
-        
+
         $start = stripos($data, "<body");
         $end = stripos($data, "</body");
         //get html body
         $body = substr($data,$start,$end-$start);
-        $result_body = strip_tags_with_attr($body,"<h1><h2><h3>");
-        
+       
+        $result_body = strip_tags($body,"<h1><h2><h3>");
         
         $start = stripos($data, "<head");
         $end = stripos($data, "</head");
