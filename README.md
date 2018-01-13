@@ -16,6 +16,7 @@ Search engine using php. It uses pivoted url as based searching points
       $list_of_search_pivots = [
             "https://domain_to_search1/", 
             "http://domain_to_search2/" 
+            ]
       ```
     * For each search page in the pivot url the following rules will be used to rank the results
        Ranking rule: search_key appears on <title> tag gives the result 95% advantage and  
