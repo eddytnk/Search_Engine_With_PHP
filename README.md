@@ -12,7 +12,7 @@ Search engine using php. It uses pivoted url as based searching points
     * In this application, we will be searching from the following list of domains (website addresses). 
       Make sure there are in their absolution form. e,g http://….
       this addresses could be coming from a file or database and we will refer to them as pivot url
-      ```php
+      ```
       $list_of_search_pivots = [
             "https://domain_to_search1/", 
             "http://domain_to_search2/" 
